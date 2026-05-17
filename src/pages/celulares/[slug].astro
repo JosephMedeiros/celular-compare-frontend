@@ -1,0 +1,166 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PriceChart from '../../components/PriceChart.astro';
+import ProductSchema from '../../components/ProductSchema.astro';
+import { getAllCelulares, getCelularBySlug, getPrecoAtual, getUrlAfiliado, getPrecoMinimo, getPrecoMaximo } from '../../lib/data';
+
+export async function getStaticPaths() {
+  const celulares = getAllCelulares();
+  return celulares.map(celular => ({
+    params: { slug: celular.slug },
+    props: { celular },
+  }));
+}
+
+interface Props {
+  celular: any;
+}
+
+const { slug } = Astro.params;
+const celular = getCelularBySlug(slug as string);
+
+if (!celular) {
+  return Astro.redirect('/404');
+}
+
+const precoAtual = getPrecoAtual(celular.slug);
+const precoMinimo = getPrecoMinimo(celular.slug);
+const precoMaximo = getPrecoMaximo(celular.slug);
+const urlAfiliado = getUrlAfiliado(celular.slug);
+
+const title = `${celular.marca} ${celular.modelo} - Melhor Preço no Mercado Livre`;
+const description = `Confira o preço atual do ${celular.marca} ${celular.modelo}. ${celular.especificacoes.processador}, ${celular.especificacoes.ram} RAM. Histórico de preços e link de afiliado.`;
+---
+
+<Layout title={title} description={description} type="product">
+  <ProductSchema celular={celular} />
+  
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm">
+      <a href="/" class="text-blue-600 hover:text-blue-700">Início</a>
+      <span class="mx-2 text-gray-500">/</span>
+      <a href="/celulares" class="text-blue-600 hover:text-blue-700">Celulares</a>
+      <span class="mx-2 text-gray-500">/</span>
+      <span class="text-gray-600">{celular.marca} {celular.modelo}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Coluna Principal -->
+      <div class="lg:col-span-2">
+        <!-- Cabeçalho do Produto -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h1 class="text-3xl font-bold mb-2">{celular.marca} {celular.modelo}</h1>
+          <p class="text-gray-600 mb-6">{celular.especificacoes.processador}</p>
+
+          <!-- Preço -->
+          <div class="mb-6">
+            <div class="text-4xl font-bold text-blue-600 mb-2">
+              R$ {precoAtual?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div class="text-sm text-gray-600">
+              <p>Preço mínimo: R$ {precoMinimo?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p>Preço máximo: R$ {precoMaximo?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+
+          <!-- CTA Button -->
+          {urlAfiliado && (
+            <a href={urlAfiliado} target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg mb-6 transition">
+              🛒 Comprar no Mercado Livre
+            </a>
+          )}
+
+          <!-- Avaliações -->
+          <div class="grid grid-cols-3 gap-4 mt-6">
+            <div class="bg-gray-50 p-4 rounded">
+              <div class="text-2xl font-bold text-yellow-500">{celular.avaliacoes_logicas.custo_beneficio}/10</div>
+              <p class="text-sm text-gray-600">Custo-Benefício</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+              <div class="text-2xl font-bold text-green-500">{celular.avaliacoes_logicas.hardware}/10</div>
+              <p class="text-sm text-gray-600">Hardware</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded">
+              <div class="text-2xl font-bold text-purple-500">{celular.avaliacoes_logicas.camera}/10</div>
+              <p class="text-sm text-gray-600">Câmera</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Especificações -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 class="text-2xl font-bold mb-4">Especificações Técnicas</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="text-gray-600 text-sm">Processador</p>
+              <p class="font-semibold">{celular.especificacoes.processador}</p>
+            </div>
+            <div>
+              <p class="text-gray-600 text-sm">Memória RAM</p>
+              <p class="font-semibold">{celular.especificacoes.ram}</p>
+            </div>
+            <div>
+              <p class="text-gray-600 text-sm">Armazenamento</p>
+              <p class="font-semibold">{celular.especificacoes.armazenamento}</p>
+            </div>
+            <div>
+              <p class="text-gray-600 text-sm">Tela</p>
+              <p class="font-semibold">{celular.especificacoes.tela}</p>
+            </div>
+            <div>
+              <p class="text-gray-600 text-sm">Bateria</p>
+              <p class="font-semibold">{celular.especificacoes.bateria}</p>
+            </div>
+            <div>
+              <p class="text-gray-600 text-sm">Câmera Principal</p>
+              <p class="font-semibold">{celular.especificacoes.cameras.principal}</p>
+            </div>
+            {celular.especificacoes.cameras.ultrawide && (
+              <div>
+                <p class="text-gray-600 text-sm">Câmera Ultrawide</p>
+                <p class="font-semibold">{celular.especificacoes.cameras.ultrawide}</p>
+              </div>
+            )}
+            {celular.especificacoes.cameras.telefoto && (
+              <div>
+                <p class="text-gray-600 text-sm">Câmera Telefoto</p>
+                <p class="font-semibold">{celular.especificacoes.cameras.telefoto}</p>
+              </div>
+            )}
+            <div>
+              <p class="text-gray-600 text-sm">Câmera Frontal</p>
+              <p class="font-semibold">{celular.especificacoes.cameras.frontal}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de Preços -->
+        <PriceChart slug={celular.slug} />
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1">
+        <!-- Box de Comparação -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6 sticky top-20">
+          <h3 class="text-lg font-bold mb-4">Comparar</h3>
+          <p class="text-gray-600 text-sm mb-4">Quer comparar este celular com outro?</p>
+          <a href={`/compare/${celular.slug}-vs`} class="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded text-center transition">
+            Comparar Agora
+          </a>
+        </div>
+
+        <!-- Box de Informações -->
+        <div class="bg-blue-50 rounded-lg p-6">
+          <h3 class="font-bold mb-3">ℹ️ Informações</h3>
+          <ul class="text-sm text-gray-700 space-y-2">
+            <li>✓ Preços atualizados a cada 12 horas</li>
+            <li>✓ Links de afiliado rastreados</li>
+            <li>✓ Histórico de preços completo</li>
+            <li>✓ Dados do Mercado Livre</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

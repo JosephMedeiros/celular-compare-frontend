@@ -1,0 +1,70 @@
+---
+import { getPrecoHistorico } from '../lib/data';
+
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const precoData = getPrecoHistorico(slug);
+
+const chartData = precoData?.historico_precos.reverse().slice(0, 30) || [];
+const labels = chartData.map(p => new Date(p.data).toLocaleDateString('pt-BR'));
+const prices = chartData.map(p => p.preco);
+---
+
+<div class="bg-white rounded-lg shadow p-6">
+  <h3 class="text-lg font-semibold mb-4">Histórico de Preços (últimos 30 dias)</h3>
+  <canvas id="priceChart" data-labels={JSON.stringify(labels)} data-prices={JSON.stringify(prices)}></canvas>
+</div>
+
+<script>
+  import Chart from 'chart.js/auto';
+
+  const canvas = document.getElementById('priceChart') as HTMLCanvasElement;
+  if (canvas) {
+    const labels = JSON.parse(canvas.dataset.labels || '[]');
+    const prices = JSON.parse(canvas.dataset.prices || '[]');
+
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Preço (R$)',
+            data: prices,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: function(value) {
+                return 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+</script>

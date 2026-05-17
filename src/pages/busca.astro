@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SearchFilter from '../components/SearchFilter.astro';
+---
+
+<Layout title="Buscar Celulares - Celular Compare" description="Busque e compare celulares com filtros avançados. Encontre o melhor preço no Mercado Livre.">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm">
+      <a href="/" class="text-blue-600 hover:text-blue-700">Início</a>
+      <span class="mx-2 text-gray-500">/</span>
+      <span class="text-gray-600">Buscar</span>
+    </nav>
+
+    <h1 class="text-3xl font-bold mb-2">Buscar Celulares</h1>
+    <p class="text-gray-600 mb-8">Use os filtros abaixo para encontrar o celular perfeito para você.</p>
+
+    <SearchFilter />
+  </div>
+</Layout>

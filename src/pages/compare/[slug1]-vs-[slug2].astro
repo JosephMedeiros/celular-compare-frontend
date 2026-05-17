@@ -1,0 +1,149 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getAllCelulares, getCelularBySlug, getPrecoAtual, getUrlAfiliado } from '../../lib/data';
+
+export async function getStaticPaths() {
+  const celulares = getAllCelulares();
+  const paths = [];
+
+  // Gera todas as combinações possíveis de comparação
+  for (let i = 0; i < celulares.length; i++) {
+    for (let j = i + 1; j < celulares.length; j++) {
+      paths.push({
+        params: {
+          slug1: celulares[i].slug,
+          slug2: celulares[j].slug,
+        },
+      });
+      // Também adiciona a ordem inversa
+      paths.push({
+        params: {
+          slug1: celulares[j].slug,
+          slug2: celulares[i].slug,
+        },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { slug1, slug2 } = Astro.params;
+
+const celular1 = getCelularBySlug(slug1 as string);
+const celular2 = getCelularBySlug(slug2 as string);
+
+if (!celular1 || !celular2) {
+  return Astro.redirect('/404');
+}
+
+const preco1 = getPrecoAtual(celular1.slug);
+const preco2 = getPrecoAtual(celular2.slug);
+const url1 = getUrlAfiliado(celular1.slug);
+const url2 = getUrlAfiliado(celular2.slug);
+
+const title = `${celular1.marca} ${celular1.modelo} vs ${celular2.marca} ${celular2.modelo} - Comparação`;
+const description = `Compare ${celular1.marca} ${celular1.modelo} com ${celular2.marca} ${celular2.modelo}. Veja especificações, preços e avaliações lado a lado.`;
+
+const especificacoes = [
+  { label: 'Processador', key1: celular1.especificacoes.processador, key2: celular2.especificacoes.processador },
+  { label: 'RAM', key1: celular1.especificacoes.ram, key2: celular2.especificacoes.ram },
+  { label: 'Armazenamento', key1: celular1.especificacoes.armazenamento, key2: celular2.especificacoes.armazenamento },
+  { label: 'Tela', key1: celular1.especificacoes.tela, key2: celular2.especificacoes.tela },
+  { label: 'Bateria', key1: celular1.especificacoes.bateria, key2: celular2.especificacoes.bateria },
+  { label: 'Câmera Principal', key1: celular1.especificacoes.cameras.principal, key2: celular2.especificacoes.cameras.principal },
+  { label: 'Câmera Frontal', key1: celular1.especificacoes.cameras.frontal, key2: celular2.especificacoes.cameras.frontal },
+];
+
+const avaliacoes = [
+  { label: 'Custo-Benefício', val1: celular1.avaliacoes_logicas.custo_beneficio, val2: celular2.avaliacoes_logicas.custo_beneficio },
+  { label: 'Hardware', val1: celular1.avaliacoes_logicas.hardware, val2: celular2.avaliacoes_logicas.hardware },
+  { label: 'Câmera', val1: celular1.avaliacoes_logicas.camera, val2: celular2.avaliacoes_logicas.camera },
+];
+---
+
+<Layout title={title} description={description} type="comparison">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm">
+      <a href="/" class="text-blue-600 hover:text-blue-700">Início</a>
+      <span class="mx-2 text-gray-500">/</span>
+      <a href="/celulares" class="text-blue-600 hover:text-blue-700">Celulares</a>
+      <span class="mx-2 text-gray-500">/</span>
+      <span class="text-gray-600">Comparação</span>
+    </nav>
+
+    <h1 class="text-3xl font-bold mb-8">
+      {celular1.marca} {celular1.modelo} <span class="text-gray-400">vs</span> {celular2.marca} {celular2.modelo}
+    </h1>
+
+    <!-- Tabela de Comparação -->
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="px-6 py-4 text-left font-semibold">Especificação</th>
+            <th class="px-6 py-4 text-left font-semibold">{celular1.marca} {celular1.modelo}</th>
+            <th class="px-6 py-4 text-left font-semibold">{celular2.marca} {celular2.modelo}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {especificacoes.map((spec) => (
+            <tr class="border-b hover:bg-gray-50">
+              <td class="px-6 py-4 font-medium text-gray-700">{spec.label}</td>
+              <td class="px-6 py-4 text-gray-600">{spec.key1}</td>
+              <td class="px-6 py-4 text-gray-600">{spec.key2}</td>
+            </tr>
+          ))}
+          <tr class="border-b bg-blue-50">
+            <td class="px-6 py-4 font-medium text-gray-700">Preço Atual</td>
+            <td class="px-6 py-4 text-blue-600 font-bold">R$ {preco1?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="px-6 py-4 text-blue-600 font-bold">R$ {preco2?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Avaliações -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {avaliacoes.map((avaliacao) => (
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="font-semibold mb-4 text-center">{avaliacao.label}</h3>
+          <div class="flex justify-between items-center">
+            <div class="text-center flex-1">
+              <div class="text-3xl font-bold text-blue-600">{avaliacao.val1}/10</div>
+              <p class="text-sm text-gray-600 mt-2">{celular1.marca}</p>
+            </div>
+            <div class="text-gray-400 mx-4">vs</div>
+            <div class="text-center flex-1">
+              <div class="text-3xl font-bold text-blue-600">{avaliacao.val2}/10</div>
+              <p class="text-sm text-gray-600 mt-2">{celular2.marca}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- CTAs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold mb-4">{celular1.marca} {celular1.modelo}</h3>
+        <p class="text-gray-600 mb-4">R$ {preco1?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        {url1 && (
+          <a href={url1} target="_blank" rel="noopener noreferrer" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center transition">
+            Comprar no Mercado Livre
+          </a>
+        )}
+      </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-bold mb-4">{celular2.marca} {celular2.modelo}</h3>
+        <p class="text-gray-600 mb-4">R$ {preco2?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        {url2 && (
+          <a href={url2} target="_blank" rel="noopener noreferrer" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center transition">
+            Comprar no Mercado Livre
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+</Layout>

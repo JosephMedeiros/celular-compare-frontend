@@ -1,0 +1,229 @@
+---
+// Este componente será renderizado no cliente com JavaScript
+---
+
+<div id="search-container" class="bg-white rounded-lg shadow p-6 mb-8">
+  <h2 class="text-2xl font-bold mb-6">Buscar e Filtrar Celulares</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Busca por Texto -->
+    <div>
+      <label class="block text-sm font-medium mb-2">Buscar</label>
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Marca, modelo..."
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    <!-- Filtro por Marca -->
+    <div>
+      <label class="block text-sm font-medium mb-2">Marca</label>
+      <select
+        id="marca-filter"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">Todas as marcas</option>
+      </select>
+    </div>
+
+    <!-- Filtro por Faixa de Preço -->
+    <div>
+      <label class="block text-sm font-medium mb-2">Preço Máximo</label>
+      <input
+        type="number"
+        id="preco-filter"
+        placeholder="R$ 0"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    <!-- Ordenação -->
+    <div>
+      <label class="block text-sm font-medium mb-2">Ordenar por</label>
+      <select
+        id="sort-filter"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="nome">Nome</option>
+        <option value="preco-asc">Preço (menor)</option>
+        <option value="preco-desc">Preço (maior)</option>
+        <option value="custo-beneficio">Custo-Benefício</option>
+        <option value="hardware">Hardware</option>
+        <option value="camera">Câmera</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Botão de Reset -->
+  <button
+    id="reset-filters"
+    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition"
+  >
+    Limpar Filtros
+  </button>
+</div>
+
+<!-- Container de Resultados -->
+<div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Resultados serão inseridos aqui -->
+</div>
+
+<!-- Mensagem de Carregamento -->
+<div id="loading" class="text-center py-8 text-gray-600">
+  Carregando celulares...
+</div>
+
+<script>
+  interface CelularItem {
+    slug: string;
+    marca: string;
+    modelo: string;
+    processador: string;
+    ram: string;
+    armazenamento: string;
+    tela: string;
+    bateria: string;
+    preco: number | null;
+    custo_beneficio: number;
+    hardware: number;
+    camera: number;
+  }
+
+  let allCelulares: CelularItem[] = [];
+  let filteredCelulares: CelularItem[] = [];
+
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const marcaFilter = document.getElementById('marca-filter') as HTMLSelectElement;
+  const precoFilter = document.getElementById('preco-filter') as HTMLInputElement;
+  const sortFilter = document.getElementById('sort-filter') as HTMLSelectElement;
+  const resetButton = document.getElementById('reset-filters') as HTMLButtonElement;
+  const resultsContainer = document.getElementById('results-container') as HTMLDivElement;
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+
+  async function loadData() {
+    try {
+      const response = await fetch('/search-index.json');
+      allCelulares = await response.json();
+      filteredCelulares = [...allCelulares];
+      
+      populateMarcaFilter();
+      renderResults();
+      loadingDiv.style.display = 'none';
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      loadingDiv.textContent = 'Erro ao carregar dados';
+    }
+  }
+
+  function populateMarcaFilter() {
+    const marcas = [...new Set(allCelulares.map(c => c.marca))].sort();
+    marcas.forEach(marca => {
+      const option = document.createElement('option');
+      option.value = marca;
+      option.textContent = marca;
+      marcaFilter.appendChild(option);
+    });
+  }
+
+  function applyFilters() {
+    filteredCelulares = allCelulares.filter(celular => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const matchesSearch = 
+        celular.marca.toLowerCase().includes(searchTerm) ||
+        celular.modelo.toLowerCase().includes(searchTerm);
+      
+      const selectedMarca = marcaFilter.value;
+      const matchesMarca = !selectedMarca || celular.marca === selectedMarca;
+      
+      const maxPreco = precoFilter.value ? parseFloat(precoFilter.value) : Infinity;
+      const matchesPreco = !celular.preco || celular.preco <= maxPreco;
+      
+      return matchesSearch && matchesMarca && matchesPreco;
+    });
+
+    applySorting();
+    renderResults();
+  }
+
+  function applySorting() {
+    const sortBy = sortFilter.value;
+    
+    switch (sortBy) {
+      case 'nome':
+        filteredCelulares.sort((a, b) => `${a.marca} ${a.modelo}`.localeCompare(`${b.marca} ${b.modelo}`));
+        break;
+      case 'preco-asc':
+        filteredCelulares.sort((a, b) => (a.preco || Infinity) - (b.preco || Infinity));
+        break;
+      case 'preco-desc':
+        filteredCelulares.sort((a, b) => (b.preco || 0) - (a.preco || 0));
+        break;
+      case 'custo-beneficio':
+        filteredCelulares.sort((a, b) => b.custo_beneficio - a.custo_beneficio);
+        break;
+      case 'hardware':
+        filteredCelulares.sort((a, b) => b.hardware - a.hardware);
+        break;
+      case 'camera':
+        filteredCelulares.sort((a, b) => b.camera - a.camera);
+        break;
+    }
+  }
+
+  function renderResults() {
+    resultsContainer.innerHTML = '';
+    
+    if (filteredCelulares.length === 0) {
+      resultsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-gray-600">Nenhum celular encontrado</div>';
+      return;
+    }
+
+    filteredCelulares.forEach(celular => {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-lg shadow hover:shadow-lg transition p-6';
+      card.innerHTML = `
+        <h3 class="text-lg font-bold mb-2">${celular.marca} ${celular.modelo}</h3>
+        <p class="text-gray-600 text-sm mb-3">${celular.processador}</p>
+        <div class="mb-4">
+          <p class="text-2xl font-bold text-blue-600">R$ ${celular.preco?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}</p>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-4 text-center text-sm">
+          <div class="bg-yellow-50 p-2 rounded">
+            <div class="font-bold text-yellow-600">${celular.custo_beneficio}</div>
+            <div class="text-xs text-gray-600">CB</div>
+          </div>
+          <div class="bg-green-50 p-2 rounded">
+            <div class="font-bold text-green-600">${celular.hardware}</div>
+            <div class="text-xs text-gray-600">HW</div>
+          </div>
+          <div class="bg-purple-50 p-2 rounded">
+            <div class="font-bold text-purple-600">${celular.camera}</div>
+            <div class="text-xs text-gray-600">CAM</div>
+          </div>
+        </div>
+        <a href="/celulares/${celular.slug}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center transition">
+          Ver Detalhes
+        </a>
+      `;
+      resultsContainer.appendChild(card);
+    });
+  }
+
+  // Event Listeners
+  searchInput.addEventListener('input', applyFilters);
+  marcaFilter.addEventListener('change', applyFilters);
+  precoFilter.addEventListener('input', applyFilters);
+  sortFilter.addEventListener('change', applyFilters);
+  resetButton.addEventListener('click', () => {
+    searchInput.value = '';
+    marcaFilter.value = '';
+    precoFilter.value = '';
+    sortFilter.value = 'nome';
+    applyFilters();
+  });
+
+  // Carrega dados ao iniciar
+  loadData();
+</script>

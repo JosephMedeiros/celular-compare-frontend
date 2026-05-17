@@ -1,0 +1,50 @@
+---
+import { getPrecoAtual, getPrecoMinimo, getPrecoMaximo } from '../lib/data';
+
+interface Props {
+  celular: {
+    slug: string;
+    marca: string;
+    modelo: string;
+    especificacoes: any;
+    avaliacoes_logicas: any;
+  };
+}
+
+const { celular } = Astro.props;
+const precoAtual = getPrecoAtual(celular.slug);
+const precoMinimo = getPrecoMinimo(celular.slug);
+const precoMaximo = getPrecoMaximo(celular.slug);
+
+const schema = {
+  '@context': 'https://schema.org/',
+  '@type': 'Product',
+  name: `${celular.marca} ${celular.modelo}`,
+  description: `${celular.marca} ${celular.modelo} - ${celular.especificacoes.processador}, ${celular.especificacoes.ram} RAM, ${celular.especificacoes.armazenamento} Armazenamento`,
+  brand: {
+    '@type': 'Brand',
+    name: celular.marca,
+  },
+  offers: {
+    '@type': 'Offer',
+    url: `https://celular-compare.vercel.app/celulares/${celular.slug}`,
+    priceCurrency: 'BRL',
+    price: precoAtual?.toString() || '0',
+    priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    availability: 'https://schema.org/InStock',
+    seller: {
+      '@type': 'Organization',
+      name: 'Mercado Livre',
+    },
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: (celular.avaliacoes_logicas.custo_beneficio + celular.avaliacoes_logicas.hardware + celular.avaliacoes_logicas.camera) / 3,
+    bestRating: '10',
+    worstRating: '1',
+    ratingCount: '3',
+  },
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

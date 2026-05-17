@@ -1,0 +1,86 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+	description?: string;
+	image?: string;
+	type?: string;
+}
+
+const { title, description = "Comparação de celulares com os melhores preços do Mercado Livre", image, type = "website" } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content={description} />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<link rel="canonical" href={canonicalURL} />
+		
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content={type} />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		{image && <meta property="og:image" content={image} />}
+		
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content={canonicalURL} />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content={description} />
+		{image && <meta property="twitter:image" content={image} />}
+
+		<title>{title}</title>
+	</head>
+	<body class="bg-gray-50 text-gray-900">
+		<header class="bg-white shadow-sm sticky top-0 z-50">
+			<nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+				<a href="/" class="text-2xl font-bold text-blue-600">📱 Celular Compare</a>
+				<div class="flex gap-4">
+					<a href="/" class="text-gray-600 hover:text-gray-900">Início</a>
+					<a href="/celulares" class="text-gray-600 hover:text-gray-900">Celulares</a>
+					<a href="/busca" class="text-gray-600 hover:text-gray-900">Buscar</a>
+				</div>
+			</nav>
+		</header>
+
+		<main class="min-h-screen">
+			<slot />
+		</main>
+
+		<footer class="bg-gray-900 text-white mt-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+					<div>
+						<h3 class="text-lg font-bold mb-4">Sobre</h3>
+						<p class="text-gray-400">Comparador de celulares com preços atualizados do Mercado Livre em tempo real.</p>
+					</div>
+					<div>
+						<h3 class="text-lg font-bold mb-4">Links</h3>
+						<ul class="space-y-2 text-gray-400">
+							<li><a href="/" class="hover:text-white">Início</a></li>
+							<li><a href="/celulares" class="hover:text-white">Todos os Celulares</a></li>
+							<li><a href="/busca" class="hover:text-white">Buscar</a></li>
+						</ul>
+					</div>
+					<div>
+						<h3 class="text-lg font-bold mb-4">Legal</h3>
+						<ul class="space-y-2 text-gray-400">
+							<li><a href="/privacidade" class="hover:text-white">Privacidade</a></li>
+							<li><a href="/termos" class="hover:text-white">Termos</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="border-t border-gray-800 pt-8 text-center text-gray-400">
+					<p>&copy; 2026 Celular Compare. Todos os direitos reservados. Links de afiliado do Mercado Livre.</p>
+				</div>
+			</div>
+		</footer>
+	</body>
+</html>

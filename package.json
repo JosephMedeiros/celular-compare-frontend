@@ -1,0 +1,25 @@
+{
+  "name": "celular-compare-frontend",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "npm run generate:sitemap && npm run generate:search-index && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "generate:sitemap": "node --loader tsx scripts/generate-sitemap.ts",
+    "generate:search-index": "node --loader tsx scripts/generate-search-index.ts"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.39.2",
+    "@tailwindcss/vite": "^4.3.0",
+    "astro": "^6.3.1",
+    "chart.js": "^4.5.1",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.1"
+  }
+}
